@@ -1,36 +1,46 @@
 import streamlit as st
 import pandas as pd
 import pickle
+import os
+
+st.set_page_config(page_title="Student Dropout Prediction", layout="centered")
+st.title("🎓 Student Dropout Prediction App")
+st.write("Masukkan data mahasiswa untuk memprediksi kemungkinan dropout.")
 
 # Load model dan scaler
-with open('/content/model.pkl', 'rb') as f:
+model_path = 'model.pkl'
+scaler_path = 'minmaxscaler.pkl'
+
+if not os.path.exists(model_path) or not os.path.exists(scaler_path):
+    st.error("Model atau scaler tidak ditemukan. Pastikan file 'model.pkl' dan 'minmaxscaler.pkl' tersedia.")
+    st.stop()
+
+with open(model_path, 'rb') as f:
     model = pickle.load(f)
 
-with open('/content/minmaxscaler.pkl', 'rb') as f:
+with open(scaler_path, 'rb') as f:
     minmaxscaler = pickle.load(f)
-
-st.title("Student Dropout Prediction App 🎓")
-st.write("Masukkan data mahasiswa untuk memprediksi apakah akan dropout atau tidak.")
 
 # Form input
 with st.form("dropout_form"):
+    st.subheader("🔢 Masukkan Data Mahasiswa:")
     col1, col2 = st.columns(2)
 
     with col1:
-        cu2_approved = st.number_input("2nd Sem Approved Units", min_value=0)
-        cu2_grade = st.number_input("2nd Sem Grade", min_value=0.0)
-        cu1_approved = st.number_input("1st Sem Approved Units", min_value=0)
-        tuition_paid = st.selectbox("Tuition Fees Up to Date", [1, 0])
-        cu1_grade = st.number_input("1st Sem Grade", min_value=0.0)
+        cu2_approved = st.number_input("2nd Sem Approved Units", min_value=0, step=1)
+        cu2_grade = st.number_input("2nd Sem Grade", min_value=0.0, step=0.1)
+        cu1_approved = st.number_input("1st Sem Approved Units", min_value=0, step=1)
+        tuition_paid = st.selectbox("Tuition Fees Up to Date", options=[1, 0], format_func=lambda x: "Yes" if x == 1 else "No")
+        cu1_grade = st.number_input("1st Sem Grade", min_value=0.0, step=0.1)
 
     with col2:
-        age = st.number_input("Age at Enrollment", min_value=16)
-        admission_grade = st.number_input("Admission Grade", min_value=0.0)
-        prev_grade = st.number_input("Previous Qualification Grade", min_value=0.0)
-        cu2_evals = st.number_input("2nd Sem Evaluations", min_value=0)
-        course = st.number_input("Course (encoded)", min_value=0)
+        age = st.number_input("Age at Enrollment", min_value=16, step=1)
+        admission_grade = st.number_input("Admission Grade", min_value=0.0, step=0.1)
+        prev_grade = st.number_input("Previous Qualification Grade", min_value=0.0, step=0.1)
+        cu2_evals = st.number_input("2nd Sem Evaluations", min_value=0, step=1)
+        course = st.number_input("Course (encoded)", min_value=0, step=1)
 
-    submitted = st.form_submit_button("Predict")
+    submitted = st.form_submit_button("🔍 Predict")
 
     if submitted:
         input_data = {
@@ -50,6 +60,7 @@ with st.form("dropout_form"):
         df_scaled = pd.DataFrame(minmaxscaler.transform(df), columns=df.columns)
 
         prediction = model.predict(df_scaled)[0]
-        result = 'Dropout' if prediction == 1 else 'Not Dropout'
+        result = '❌ Dropout' if prediction == 1 else '✅ Not Dropout'
 
-        st.success(f"Prediction: **{result}**")
+        st.success(f"🎯 **Prediction Result:** {result}")
+        st.write("Model memprediksi berdasarkan data akademik dan profil mahasiswa.")
