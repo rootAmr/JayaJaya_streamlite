@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import pickle
 import os
 
 # Konfigurasi halaman
@@ -9,19 +8,16 @@ st.set_page_config(page_title="Student Dropout Prediction", layout="centered")
 st.title("🎓 Student Dropout Prediction App")
 st.write("Masukkan data mahasiswa untuk memprediksi kemungkinan dropout.")
 
-# Path ke file model dan scaler
-model_path = 'modul.joblib'  # Gunakan file joblib
-scaler_path = 'minmaxscaler.pkl'
+# Path ke file model
+model_path = 'model.joblib'
 
 # Validasi keberadaan file
-if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-    st.error("Model atau scaler tidak ditemukan. Pastikan file 'modul.joblib' dan 'minmaxscaler.pkl' tersedia.")
+if not os.path.exists(model_path):
+    st.error("Model tidak ditemukan. Pastikan file 'model.joblib' tersedia.")
     st.stop()
 
-# Load model dan scaler
+# Load model
 model = joblib.load(model_path)
-with open(scaler_path, 'rb') as f:
-    minmaxscaler = pickle.load(f)
 
 # Form input user
 with st.form("dropout_form"):
@@ -59,15 +55,13 @@ with st.form("dropout_form"):
             'Course': course
         }
 
-        # Konversi ke DataFrame dan scaling
+        # Konversi ke DataFrame
         df = pd.DataFrame([input_data])
-        df_scaled = pd.DataFrame(minmaxscaler.transform(df), columns=df.columns)
 
         # Prediksi
-        prediction = model.predict(df_scaled)[0]
+        prediction = model.predict(df)[0]
         result = '❌ Dropout' if prediction == 1 else '✅ Not Dropout'
 
         # Tampilkan hasil
         st.success(f"🎯 **Prediction Result:** {result}")
         st.write("Model memprediksi berdasarkan data akademik dan profil mahasiswa.")
-
